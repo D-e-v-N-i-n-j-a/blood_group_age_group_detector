@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:local_auth/local_auth.dart';
-import 'package:lottie/lottie.dart';  // Import Lottie package
+import 'package:lottie/lottie.dart';
+import 'dart:math';
+import 'package:biometric/utils/blood_group.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -10,37 +11,26 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final LocalAuthentication _auth = LocalAuthentication();
-  bool _authenticated = false;
-
-  // Dummy data: User ID mapped to blood group and age
-  final Map<String, Map<String, String>> _userData = {
-    'user1': {'bloodGroup': 'A+', 'age': '25'},
-    'user2': {'bloodGroup': 'B-', 'age': '30'},
-    'user3': {'bloodGroup': 'O+', 'age': '28'},
-  };
-
   String? _bloodGroup;
   String? _age;
+  bool _isLoading = false;
 
-  Future<void> _authenticate() async {
-    try {
-      _authenticated = await _auth.authenticate(
-        localizedReason: 'Scan your fingerprint to authenticate',
-        options: const AuthenticationOptions(stickyAuth: true),
-      );
+ 
+  Future<void> _showRandomData() async {
+    setState(() {
+      _isLoading = true; // Show loading indicator
+    });
 
-      if (_authenticated) {
-        setState(() {
-          _bloodGroup = _userData['user1']!['bloodGroup'];
-          _age = _userData['user1']!['age'];
-        });
-      }
-    } catch (e) {
-      setState(() {
-        _authenticated = false;
-      });
-    }
+    await Future.delayed(const Duration(seconds: 2)); // Simulate loading time
+
+    final random = Random();
+    final randomSample = samples[random.nextInt(samples.length)];
+    _bloodGroup = randomSample['bloodGroup'];
+    _age = randomSample['age'];
+
+    setState(() {
+      _isLoading = false; // Hide loading indicator
+    });
   }
 
   @override
@@ -115,23 +105,70 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
       body: Center(
-        child: _authenticated
-            ? Column(
+        child: _isLoading
+            ? const Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text('Blood Group: $_bloodGroup', style: TextStyle(fontSize: 20)),
-                  Text('Age: $_age', style: TextStyle(fontSize: 20)),
+                  CircularProgressIndicator(),
+                  SizedBox(height: 16),
+                  Text(
+                    'Detecting your blood group and age...',
+                    style: TextStyle(fontSize: 16, color: Colors.grey),
+                  ),
                 ],
               )
-            : GestureDetector(
-                onLongPress: _authenticate,  // Trigger authentication on long press
-                child: Lottie.asset(
-                  'assets/finger.json',  // Path to your Lottie animation file
-                  width: 200,
-                  height: 200,
-                  fit: BoxFit.cover,
-                ),
-              ),
+            : _bloodGroup != null && _age != null
+                ? Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'Blood Group: $_bloodGroup',
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blue,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        'Age: $_age years',
+                        style: const TextStyle(
+                          fontSize: 18,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      ElevatedButton(
+                        onPressed: () {
+                          setState(() {
+                            _bloodGroup = null;
+                            _age = null;
+                          });
+                        },
+                        child: const Text('Retry'),
+                      ),
+                    ],
+                  )
+                : Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      GestureDetector(
+                        onLongPress: _showRandomData,
+                        child: Lottie.asset(
+                          'assets/finger.json',
+                          width: 200,
+                          height: 200,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      const Text(
+                        'Tap and hold on the fingerprint to detect blood group and age.',
+                        style: TextStyle(fontSize: 16, color: Colors.grey),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
       ),
     );
   }
