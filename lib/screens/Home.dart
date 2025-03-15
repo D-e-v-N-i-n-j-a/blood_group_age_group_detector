@@ -13,9 +13,9 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   String? _bloodGroup;
   String? _age;
+  String? _gender;
   bool _isLoading = false;
 
- 
   Future<void> _showRandomData() async {
     setState(() {
       _isLoading = true; // Show loading indicator
@@ -25,10 +25,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final random = Random();
     final randomSample = samples[random.nextInt(samples.length)];
-    _bloodGroup = randomSample['bloodGroup'];
-    _age = randomSample['age'];
 
     setState(() {
+      _bloodGroup = randomSample['bloodGroup'];
+      _age = randomSample['age'];
+      _gender = (random.nextBool()) ? 'Male' : 'Female'; // Random gender
       _isLoading = false; // Hide loading indicator
     });
   }
@@ -112,12 +113,12 @@ class _HomeScreenState extends State<HomeScreen> {
                   CircularProgressIndicator(),
                   SizedBox(height: 16),
                   Text(
-                    'Detecting your blood group and age...',
+                    'Detecting your blood group, age, and gender...',
                     style: TextStyle(fontSize: 16, color: Colors.grey),
                   ),
                 ],
               )
-            : _bloodGroup != null && _age != null
+            : _bloodGroup != null && _age != null && _gender != null
                 ? Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -137,12 +138,22 @@ class _HomeScreenState extends State<HomeScreen> {
                           color: Colors.black87,
                         ),
                       ),
+                      const SizedBox(height: 10),
+                      Text(
+                        'Gender: $_gender',
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.green,
+                        ),
+                      ),
                       const SizedBox(height: 20),
                       ElevatedButton(
                         onPressed: () {
                           setState(() {
                             _bloodGroup = null;
                             _age = null;
+                            _gender = null;
                           });
                         },
                         child: const Text('Retry'),
@@ -163,7 +174,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       const SizedBox(height: 16),
                       const Text(
-                        'Tap and hold on the fingerprint to detect blood group and age.',
+                        'Tap and hold on the fingerprint to detect blood group, age, and gender.',
                         style: TextStyle(fontSize: 16, color: Colors.grey),
                         textAlign: TextAlign.center,
                       ),
